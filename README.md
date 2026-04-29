@@ -4,7 +4,8 @@ This repository contains restaurant probability-of-default modeling notebooks an
 
 ## Main Notebook
 
-- `Restaurant_Default_Model-Copy1.ipynb` is the validated notebook run in the local `restaurant-venv` kernel.
+- `Restaurant_Default_Model_Executed.ipynb` is the final validated notebook with saved outputs.
+- `Restaurant_Default_Model-Copy1.ipynb` is the working notebook used to produce the executed copy.
 - The notebook was updated for current package APIs and local data paths, then executed successfully end-to-end.
 
 ## Environment
@@ -15,6 +16,12 @@ Install the package stack with:
 python3 -m venv .venv_restaurant
 .venv_restaurant/bin/python -m pip install -U pip setuptools wheel
 .venv_restaurant/bin/python -m pip install -r requirements.txt
+```
+
+The `requirements.txt` file is pinned from the environment that successfully ran the notebook. For conda-compatible tooling, use:
+
+```bash
+conda env create -f environment.yml
 ```
 
 Register the kernel:
