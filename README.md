@@ -1,11 +1,10 @@
-# Toast Probability of Default Modeling
+# Restaurant PD Model
 
 This repository contains restaurant probability-of-default modeling notebooks and supporting code for the Toast capital case study.
 
 ## Main Notebook
 
 - `Restaurant_Default_Model_Executed.ipynb` is the final validated notebook with saved outputs.
-- `Restaurant_Default_Model-Copy1.ipynb` is the working notebook used to produce the executed copy.
 - The notebook was updated for current package APIs and local data paths, then executed successfully end-to-end.
 
 ## Environment
