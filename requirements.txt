@@ -1,0 +1,13 @@
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+statsmodels
+optbinning
+probatus
+shap
+openpyxl
+nbclient
+nbformat
+ipykernel
