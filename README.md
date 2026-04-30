@@ -7,6 +7,10 @@ This repository contains restaurant probability-of-default modeling notebooks an
 - `Restaurant_Default_Model_Executed.ipynb` is the final validated notebook with saved outputs.
 - The notebook was updated for current package APIs and local data paths, then executed successfully end-to-end.
 
+## Interactive Report
+
+- `index.html` is a self-contained interactive report of the analysis (model performance, feature importance, decile risk, calibration, VIF, and a searchable holdout risk table). Open it directly in a browser, or view it via GitHub Pages once enabled for this repository.
+
 ## Environment
 
 Install the package stack with:

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Restaurant PD Model — Interactive Report</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  body { background:#0f172a; color:#e2e8f0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+  .navbar { background:#020617; border-bottom:1px solid #1e293b; }
+  .card { background:#1e293b; border:1px solid #334155; }
+  .card h5,.card .card-title { color:#f8fafc; }
+  .metric-value { font-size:2rem; font-weight:600; color:#38bdf8; }
+  .metric-label { font-size:0.85rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; }
+  .section { margin-top:3rem; }
+  table.dataframe { color:#e2e8f0; }
+  .table { color:#e2e8f0; }
+  .table thead { background:#0f172a; }
+  .table-striped tbody tr:nth-of-type(odd) { background:#1e293b; }
+  .table-striped tbody tr:nth-of-type(even) { background:#172033; }
+  input.form-control { background:#0f172a; color:#e2e8f0; border-color:#334155; }
+  input.form-control::placeholder { color:#64748b; }
+  .badge.bg-info { background:#0ea5e9 !important; }
+  footer { color:#64748b; }
+</style>
+</head>
+<body>
+<nav class="navbar navbar-dark px-4">
+  <div class="container-fluid">
+    <span class="navbar-brand mb-0 h1">Restaurant Probability of Default</span>
+    <span class="badge bg-info">Interactive Report</span>
+  </div>
+</nav>
+
+<div class="container my-5">
+
+  <div class="row">
+    <div class="col-12">
+      <h2>Executive Summary</h2>
+      <p class="text-secondary">Logistic regression and gradient boosting models trained on restaurant-level
+      processing volume and transaction-hours features. Evaluation on a 25% test split, with calibration
+      assessed against actual default rates.</p>
+    </div>
+  </div>
+
+  <div class="row g-3 section" id="summary-cards"></div>
+
+  <div class="section">
+    <h3>Model Comparison</h3>
+    <div id="chart-model-compare" style="height:420px;"></div>
+  </div>
+
+  <div class="section">
+    <h3>Feature Importance</h3>
+    <div id="chart-feature-importance" style="height:420px;"></div>
+  </div>
+
+  <div class="section">
+    <h3>Decile Risk Profile (Holdout)</h3>
+    <div id="chart-deciles" style="height:420px;"></div>
+  </div>
+
+  <div class="section">
+    <h3>Predicted PD Distribution (Holdout)</h3>
+    <div id="chart-hist" style="height:420px;"></div>
+  </div>
+
+  <div class="section">
+    <h3>Variance Inflation Factor (Multicollinearity)</h3>
+    <div id="chart-vif" style="height:520px;"></div>
+  </div>
+
+  <div class="section">
+    <h3>Top Holdout Restaurants by Predicted PD</h3>
+    <p class="text-secondary">Showing top 200 highest-risk restaurants. Use the search to filter.</p>
+    <input type="text" id="riskSearch" placeholder="Search Restaurant_ID..." class="form-control mb-3" />
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle" id="riskTable">
+        <thead>
+          <tr>
+            <th>Restaurant_ID</th>
+            <th class="text-end">Predicted PD</th>
+            <th class="text-end">Score (0–100)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Calibration Snapshot</h3>
+    <div id="calibration-table"></div>
+  </div>
+
+  <div class="section">
+    <h3>Model Card (Logistic Regression)</h3>
+    <pre class="bg-dark text-info p-3 rounded" id="model-card-pre"></pre>
+  </div>
+
+  <footer class="section text-center small">
+    Generated from <code>Restaurant_Default_Model_Executed.ipynb</code>.
+  </footer>
+</div>
+
+<script id="data-blob" type="application/json">{"model_performance": [{"model": "LogisticRegression", "train_auc": 0.8047758332949475, "test_auc": 0.781515791019616, "auc_gap": 0.0232600422753315, "test_accuracy": 0.9104698483166852, "test_balanced_accuracy": 0.5920490971087045, "test_precision": 0.5795454545454546, "test_recall": 0.19921875, "test_ks": 0.4443706579485084, "test_rmse": 0.2727367773627717}, {"model": "GradientBoosting", "train_auc": 0.8067269499650984, "test_auc": 0.7742755797915816, "auc_gap": 0.0324513701735168, "test_accuracy": 0.9119496855345912, "test_balanced_accuracy": 0.5648857338067022, "test_precision": 0.6730769230769231, "test_recall": 0.13671875, "test_ks": 0.4354024060073559, "test_rmse": 0.2699861789874569}], "feature_importance": [{"feature": "avg_proc_vol_7d", "importance": 0.3329960248736267}, {"feature": "avg_proc_vol_30d", "importance": 0.2777807735171815}, {"feature": "avg_tx_hours_7d", "importance": 0.2461816292236118}, {"feature": "max_tx_hours_7d", "importance": 0.1731300263403194}, {"feature": "min_proc_vol_7d", "importance": 0.1492233256758859}, {"feature": "cv_proc_vol_7d", "importance": 0.1333330287382903}, {"feature": "cv_tx_hours_7d", "importance": 0.0478913192637657}, {"feature": "min_tx_hours_7d", "importance": 0.0096178020762132}], "deciles": [{"decile": 0, "avg_pred": 0.0223777533039647, "sample_size": 454}, {"decile": 1, "avg_pred": 0.0272116740088105, "sample_size": 454}, {"decile": 2, "avg_pred": 0.0337892376681614, "sample_size": 446}, {"decile": 3, "avg_pred": 0.0421637168141592, "sample_size": 452}, {"decile": 4, "avg_pred": 0.0520066371681416, "sample_size": 452}, {"decile": 5, "avg_pred": 0.0642836644591611, "sample_size": 453}, {"decile": 6, "avg_pred": 0.0807679287305122, "sample_size": 449}, {"decile": 7, "avg_pred": 0.1052350332594235, "sample_size": 451}, {"decile": 8, "avg_pred": 0.1522907079646017, "sample_size": 452}, {"decile": 9, "avg_pred": 0.3748144124168515, "sample_size": 451}], "calibration": [{"snapshot_month": 2, "actual_default_rate": 0.094802071772105, "predicted_default_rate": 0.1179461596304591, "sample_size": 10812, "abs_error": 0.023144087858354}], "vif": [{"feature": "avg_proc_vol_7d", "VIF": 14.106186174650883}, {"feature": "min_proc_vol_7d", "VIF": 9.764819280050949}, {"feature": "avg_tx_hours_7d", "VIF": 18.680840444815697}, {"feature": "min_tx_hours_7d", "VIF": 12.025205581423648}, {"feature": "max_tx_hours_7d", "VIF": 10.312612534959282}, {"feature": "cv_proc_vol_7d", "VIF": 4.664835728389391}, {"feature": "cv_tx_hours_7d", "VIF": 6.2147807082174475}, {"feature": "avg_proc_vol_30d", "VIF": 13.269214758777972}, {"feature": "min_proc_vol_30d", "VIF": 8.237946048538788}, {"feature": "avg_tx_hours_30d", "VIF": 15.1754897947247}, {"feature": "min_tx_hours_30d", "VIF": 8.635820120956975}, {"feature": "max_tx_hours_30d", "VIF": 6.162092779579395}, {"feature": "cv_proc_vol_30d", "VIF": 5.003729509860123}], "histogram": {"bin_left": [0.0066, 0.0302, 0.0539, 0.0775, 0.1012, 0.1248, 0.1484, 0.1721, 0.1957, 0.2194, 0.243, 0.2666, 0.2903, 0.3139, 0.3376, 0.3612, 0.3848, 0.4085, 0.4321, 0.4558, 0.4794, 0.503, 0.5267, 0.5503, 0.574, 0.5976, 0.6212, 0.6449, 0.6685, 0.6922, 0.7158, 0.7394, 0.7631, 0.7867, 0.8104, 0.834, 0.8576, 0.8813, 0.9049, 0.9286], "bin_right": [0.0302, 0.0539, 0.0775, 0.1012, 0.1248, 0.1484, 0.1721, 0.1957, 0.2194, 0.243, 0.2666, 0.2903, 0.3139, 0.3376, 0.3612, 0.3848, 0.4085, 0.4321, 0.4558, 0.4794, 0.503, 0.5267, 0.5503, 0.574, 0.5976, 0.6212, 0.6449, 0.6685, 0.6922, 0.7158, 0.7394, 0.7631, 0.7867, 0.8104, 0.834, 0.8576, 0.8813, 0.9049, 0.9286, 0.9522], "count": [1236, 989, 579, 458, 343, 225, 154, 85, 71, 74, 59, 38, 39, 27, 24, 17, 12, 11, 6, 9, 4, 11, 6, 5, 5, 3, 5, 3, 3, 1, 2, 0, 2, 2, 3, 2, 0, 0, 0, 1]}, "top_risk_restaurants": [{"Restaurant_ID": "7b66e4e5-367c-4f0d-bab7-6b3e4ef8ff47", "Predicted_Default_Probability": 0.9522, "Predicted_Default_Score_0_100": 95.22}, {"Restaurant_ID": "30f6e9b8-3347-4ec0-a8b6-57d4563b1188", "Predicted_Default_Probability": 0.8486, "Predicted_Default_Score_0_100": 84.86}, {"Restaurant_ID": "33fbf3ec-7b0b-4ab7-8583-4b2bd5d1e2f0", "Predicted_Default_Probability": 0.8439, "Predicted_Default_Score_0_100": 84.39}, {"Restaurant_ID": "35bed552-f17e-460a-8bca-982d65aab70f", "Predicted_Default_Probability": 0.8251, "Predicted_Default_Score_0_100": 82.51}, {"Restaurant_ID": "e6b970cf-bc42-4cf8-a57d-86fd15d4b64d", "Predicted_Default_Probability": 0.8174, "Predicted_Default_Score_0_100": 81.74}, {"Restaurant_ID": "4dac0624-edeb-4b4a-9165-354e278c9870", "Predicted_Default_Probability": 0.8132, "Predicted_Default_Score_0_100": 81.32}, {"Restaurant_ID": "214e4f79-58fd-40cd-82cc-f35c6070876b", "Predicted_Default_Probability": 0.804, "Predicted_Default_Score_0_100": 80.4}, {"Restaurant_ID": "0374273f-0e0f-46de-bf86-e700c6f28b0e", "Predicted_Default_Probability": 0.7896, "Predicted_Default_Score_0_100": 78.96}, {"Restaurant_ID": "1a2e6708-3a83-4ca3-86da-d50f7cd8e608", "Predicted_Default_Probability": 0.7711, "Predicted_Default_Score_0_100": 77.11}, {"Restaurant_ID": "914b11c4-3c8c-483c-a6ee-0655e3d841b4", "Predicted_Default_Probability": 0.7699, "Predicted_Default_Score_0_100": 76.99}, {"Restaurant_ID": "c4804892-7001-4ee9-aef5-ba9ac9a1fe25", "Predicted_Default_Probability": 0.7338, "Predicted_Default_Score_0_100": 73.38}, {"Restaurant_ID": "5757cb00-5cef-4d94-a3dd-4f5d55acbdb9", "Predicted_Default_Probability": 0.726, "Predicted_Default_Score_0_100": 72.6}, {"Restaurant_ID": "f9df05e0-11d2-410b-96ed-180c156c7e53", "Predicted_Default_Probability": 0.6977, "Predicted_Default_Score_0_100": 69.77}, {"Restaurant_ID": "4668f7ca-2deb-4d05-bc52-a1ec66d079bf", "Predicted_Default_Probability": 0.6849, "Predicted_Default_Score_0_100": 68.49}, {"Restaurant_ID": "c0ec4063-6a03-485a-90bf-f24d4cf456d1", "Predicted_Default_Probability": 0.6796, "Predicted_Default_Score_0_100": 67.96}, {"Restaurant_ID": "8c1b3d49-868b-42d2-ad99-01ec3b8f72fb", "Predicted_Default_Probability": 0.6721, "Predicted_Default_Score_0_100": 67.21}, {"Restaurant_ID": "e37a39c7-0fec-49ac-a4f7-7a8c71cd05fd", "Predicted_Default_Probability": 0.6578, "Predicted_Default_Score_0_100": 65.78}, {"Restaurant_ID": "f1cf7e84-dcd1-4ea8-8af8-7d3ea36f542a", "Predicted_Default_Probability": 0.6562, "Predicted_Default_Score_0_100": 65.62}, {"Restaurant_ID": "7c96ed1e-7382-44fe-b748-8e8dba5fa2d7", "Predicted_Default_Probability": 0.6531, "Predicted_Default_Score_0_100": 65.31}, {"Restaurant_ID": "818800e3-254c-4032-a023-8d970df80579", "Predicted_Default_Probability": 0.6366, "Predicted_Default_Score_0_100": 63.66}, {"Restaurant_ID": "db3e1331-eb89-4df1-a240-5166aced142f", "Predicted_Default_Probability": 0.6332, "Predicted_Default_Score_0_100": 63.32}, {"Restaurant_ID": "7bcd354a-50eb-4b7e-84b9-acb3e7ae9389", "Predicted_Default_Probability": 0.6324, "Predicted_Default_Score_0_100": 63.24}, {"Restaurant_ID": "2439190f-acb9-4679-bc21-dda08b1224cf", "Predicted_Default_Probability": 0.6231, "Predicted_Default_Score_0_100": 62.31}, {"Restaurant_ID": "e127ced0-b19d-47fd-adc3-b7bfc63dc14e", "Predicted_Default_Probability": 0.6224, "Predicted_Default_Score_0_100": 62.24}, {"Restaurant_ID": "d8347969-7891-4c43-97b6-3dfa9bb378c4", "Predicted_Default_Probability": 0.6056, "Predicted_Default_Score_0_100": 60.56}, {"Restaurant_ID": "4dfc06fb-680e-4661-9803-f73580d99899", "Predicted_Default_Probability": 0.6, "Predicted_Default_Score_0_100": 60.0}, {"Restaurant_ID": "44c79166-f2af-47f8-9b39-6708174a6328", "Predicted_Default_Probability": 0.5985, "Predicted_Default_Score_0_100": 59.85}, {"Restaurant_ID": "a917eb9a-b55d-47b0-9c05-5132a1c0e99a", "Predicted_Default_Probability": 0.5906, "Predicted_Default_Score_0_100": 59.06}, {"Restaurant_ID": "de7d26c0-0c61-4e5c-8a43-4fb371c0ed4f", "Predicted_Default_Probability": 0.5839, "Predicted_Default_Score_0_100": 58.39}, {"Restaurant_ID": "7648ffa9-69de-482c-afbf-d4db40c227cc", "Predicted_Default_Probability": 0.5762, "Predicted_Default_Score_0_100": 57.62}, {"Restaurant_ID": "a4fabdd6-0333-4f1d-a06d-1bec93cf3e5b", "Predicted_Default_Probability": 0.576, "Predicted_Default_Score_0_100": 57.6}, {"Restaurant_ID": "478b5b84-6fd3-4dbc-8901-458d40b6d43e", "Predicted_Default_Probability": 0.5749, "Predicted_Default_Score_0_100": 57.49}, {"Restaurant_ID": "89c319f2-b016-4887-bea7-dffbad499e7f", "Predicted_Default_Probability": 0.5721, "Predicted_Default_Score_0_100": 57.21}, {"Restaurant_ID": "1d87808a-954c-41cc-ada4-c1839438947b", "Predicted_Default_Probability": 0.5606, "Predicted_Default_Score_0_100": 56.06}, {"Restaurant_ID": "f12a8322-9272-4792-b092-da9eab976776", "Predicted_Default_Probability": 0.5579, "Predicted_Default_Score_0_100": 55.79}, {"Restaurant_ID": "02a801ec-8912-405a-aa2e-467884f6d91a", "Predicted_Default_Probability": 0.5558, "Predicted_Default_Score_0_100": 55.58}, {"Restaurant_ID": "6e8b6979-1513-468e-a022-66b9071aaea3", "Predicted_Default_Probability": 0.5558, "Predicted_Default_Score_0_100": 55.58}, {"Restaurant_ID": "026cbe54-04d4-4d05-9fe4-11b07c912e6b", "Predicted_Default_Probability": 0.5494, "Predicted_Default_Score_0_100": 54.94}, {"Restaurant_ID": "64520ec8-f196-4b96-9339-e3d938e8b661", "Predicted_Default_Probability": 0.5394, "Predicted_Default_Score_0_100": 53.94}, {"Restaurant_ID": "610c761b-52bf-4f1b-80bc-80788742197f", "Predicted_Default_Probability": 0.5393, "Predicted_Default_Score_0_100": 53.93}, {"Restaurant_ID": "b8217df2-6f64-43ca-a61f-dc44c5f35cd6", "Predicted_Default_Probability": 0.5378, "Predicted_Default_Score_0_100": 53.78}, {"Restaurant_ID": "ebf3d3c6-0b0f-4f8c-aaf9-dd68fe7b360b", "Predicted_Default_Probability": 0.5288, "Predicted_Default_Score_0_100": 52.88}, {"Restaurant_ID": "71d44d69-e96b-4544-a54e-e3fb4f4ccc00", "Predicted_Default_Probability": 0.5286, "Predicted_Default_Score_0_100": 52.86}, {"Restaurant_ID": "1cc8b225-7164-4f3f-a26c-7e0ab5dc0d47", "Predicted_Default_Probability": 0.5252, "Predicted_Default_Score_0_100": 52.52}, {"Restaurant_ID": "d19cfe57-b16f-4926-b406-2255ad59d566", "Predicted_Default_Probability": 0.523, "Predicted_Default_Score_0_100": 52.3}, {"Restaurant_ID": "4f9c3186-cab0-4aef-873a-fb3412df953a", "Predicted_Default_Probability": 0.5228, "Predicted_Default_Score_0_100": 52.28}, {"Restaurant_ID": "1239fc2b-6cba-4fb7-aaf7-55584b4db048", "Predicted_Default_Probability": 0.5207, "Predicted_Default_Score_0_100": 52.07}, {"Restaurant_ID": "5c50b747-fe88-43a2-909e-a6b887a0b359", "Predicted_Default_Probability": 0.5205, "Predicted_Default_Score_0_100": 52.05}, {"Restaurant_ID": "cec623a3-4efb-4eb8-8d95-568b2929386b", "Predicted_Default_Probability": 0.5193, "Predicted_Default_Score_0_100": 51.93}, {"Restaurant_ID": "7e994f95-ff08-4324-af78-009c816a9087", "Predicted_Default_Probability": 0.5181, "Predicted_Default_Score_0_100": 51.81}, {"Restaurant_ID": "be99503c-e776-4598-a198-92c25ab95e5b", "Predicted_Default_Probability": 0.5168, "Predicted_Default_Score_0_100": 51.68}, {"Restaurant_ID": "6e85dc63-6be0-4b29-9854-55b2a5d586f8", "Predicted_Default_Probability": 0.5145, "Predicted_Default_Score_0_100": 51.45}, {"Restaurant_ID": "06aa19ee-a977-4f8b-bbec-e80c97ea78df", "Predicted_Default_Probability": 0.509, "Predicted_Default_Score_0_100": 50.9}, {"Restaurant_ID": "081b66e0-dbf2-4b01-9f6f-9e743d046eba", "Predicted_Default_Probability": 0.5052, "Predicted_Default_Score_0_100": 50.52}, {"Restaurant_ID": "afb9e354-15ea-4d91-a93c-07c2e6fded75", "Predicted_Default_Probability": 0.4943, "Predicted_Default_Score_0_100": 49.43}, {"Restaurant_ID": "93638c05-24b3-4790-a048-f5c8463aa909", "Predicted_Default_Probability": 0.4938, "Predicted_Default_Score_0_100": 49.38}, {"Restaurant_ID": "e7d0b388-bda4-4787-b3f2-bd9117d2e384", "Predicted_Default_Probability": 0.4894, "Predicted_Default_Score_0_100": 48.94}, {"Restaurant_ID": "4fe7aca1-9130-4729-8dc0-e1ce10cf96ba", "Predicted_Default_Probability": 0.4796, "Predicted_Default_Score_0_100": 47.96}, {"Restaurant_ID": "3d66696c-a303-4941-be1d-5a6aadf7cf4d", "Predicted_Default_Probability": 0.4786, "Predicted_Default_Score_0_100": 47.86}, {"Restaurant_ID": "4543bca1-9d2f-4020-bb5e-ffb8305a18c4", "Predicted_Default_Probability": 0.4774, "Predicted_Default_Score_0_100": 47.74}, {"Restaurant_ID": "1bc093de-900c-4327-a982-6cbe114238fc", "Predicted_Default_Probability": 0.4709, "Predicted_Default_Score_0_100": 47.09}, {"Restaurant_ID": "d7c70189-171d-4b39-a119-32afcfd42c3a", "Predicted_Default_Probability": 0.4704, "Predicted_Default_Score_0_100": 47.04}, {"Restaurant_ID": "b3f765a3-4cc5-4b64-87cc-9a8944b6df3e", "Predicted_Default_Probability": 0.4681, "Predicted_Default_Score_0_100": 46.81}, {"Restaurant_ID": "4a257488-6dba-42f9-97bd-d112b1e65587", "Predicted_Default_Probability": 0.465, "Predicted_Default_Score_0_100": 46.5}, {"Restaurant_ID": "f7750b87-a93c-4c31-9ffd-afc0a91698aa", "Predicted_Default_Probability": 0.4595, "Predicted_Default_Score_0_100": 45.95}, {"Restaurant_ID": "371187eb-d0b3-4e5d-91ff-3e39d868c41c", "Predicted_Default_Probability": 0.458, "Predicted_Default_Score_0_100": 45.8}, {"Restaurant_ID": "c3415254-c2af-4af7-845d-2026b3f2f3df", "Predicted_Default_Probability": 0.4575, "Predicted_Default_Score_0_100": 45.75}, {"Restaurant_ID": "1349d3a4-f541-4bac-9bc1-e48eddb711d4", "Predicted_Default_Probability": 0.4495, "Predicted_Default_Score_0_100": 44.95}, {"Restaurant_ID": "0fcb2b75-8942-4bb7-87af-d13fbae053db", "Predicted_Default_Probability": 0.4439, "Predicted_Default_Score_0_100": 44.39}, {"Restaurant_ID": "3e949697-38b6-419d-86e8-04d5bae97c63", "Predicted_Default_Probability": 0.4435, "Predicted_Default_Score_0_100": 44.35}, {"Restaurant_ID": "d0f6d06e-1d9c-46c0-8c11-8f0aec4c4976", "Predicted_Default_Probability": 0.4416, "Predicted_Default_Score_0_100": 44.16}, {"Restaurant_ID": "048722a0-de82-46ad-b78b-6dc584b5efe0", "Predicted_Default_Probability": 0.4415, "Predicted_Default_Score_0_100": 44.15}, {"Restaurant_ID": "1b3f74cf-355b-4ad2-9179-930d61f19b35", "Predicted_Default_Probability": 0.4387, "Predicted_Default_Score_0_100": 43.87}, {"Restaurant_ID": "c9b8daa5-90f9-4eca-8d0b-b93a36b5b2c5", "Predicted_Default_Probability": 0.4293, "Predicted_Default_Score_0_100": 42.93}, {"Restaurant_ID": "0a0b165c-1c15-4d8f-9a8d-5bd550632988", "Predicted_Default_Probability": 0.4223, "Predicted_Default_Score_0_100": 42.23}, {"Restaurant_ID": "b4c8ac55-6ab8-4526-9015-823b1e21b7f9", "Predicted_Default_Probability": 0.4208, "Predicted_Default_Score_0_100": 42.08}, {"Restaurant_ID": "64277a21-ba64-44d1-ac36-1db8db605042", "Predicted_Default_Probability": 0.4189, "Predicted_Default_Score_0_100": 41.89}, {"Restaurant_ID": "53a84077-c5be-4be1-afdb-deaa3af4559d", "Predicted_Default_Probability": 0.418, "Predicted_Default_Score_0_100": 41.8}, {"Restaurant_ID": "5cb31574-8b9d-4f36-b074-aac49bc3a7d3", "Predicted_Default_Probability": 0.4157, "Predicted_Default_Score_0_100": 41.57}, {"Restaurant_ID": "627a44f8-9f8a-424c-b654-2a3b3207bbe2", "Predicted_Default_Probability": 0.4157, "Predicted_Default_Score_0_100": 41.57}, {"Restaurant_ID": "d8edfd8f-cf41-443d-8406-78d6efa263bc", "Predicted_Default_Probability": 0.4129, "Predicted_Default_Score_0_100": 41.29}, {"Restaurant_ID": "93326b69-34a2-4e34-b468-7f2b0afb8478", "Predicted_Default_Probability": 0.412, "Predicted_Default_Score_0_100": 41.2}, {"Restaurant_ID": "79a8c931-4c4f-4d70-a1b6-bd5c30983e6a", "Predicted_Default_Probability": 0.4107, "Predicted_Default_Score_0_100": 41.07}, {"Restaurant_ID": "33f39f97-acd5-4de3-a079-0dfc9fccc791", "Predicted_Default_Probability": 0.4107, "Predicted_Default_Score_0_100": 41.07}, {"Restaurant_ID": "9f226424-4ca5-420b-b543-f69243d478e1", "Predicted_Default_Probability": 0.4067, "Predicted_Default_Score_0_100": 40.67}, {"Restaurant_ID": "add4d627-1510-444f-8db6-902eb7f193f5", "Predicted_Default_Probability": 0.405, "Predicted_Default_Score_0_100": 40.5}, {"Restaurant_ID": "cc351757-1d53-484d-b30d-99110727e0cc", "Predicted_Default_Probability": 0.4049, "Predicted_Default_Score_0_100": 40.49}, {"Restaurant_ID": "378e0730-373b-47ba-bbce-4ff7c358c013", "Predicted_Default_Probability": 0.4015, "Predicted_Default_Score_0_100": 40.15}, {"Restaurant_ID": "55f43f9e-9906-436e-8e29-16f2735ac2d7", "Predicted_Default_Probability": 0.3999, "Predicted_Default_Score_0_100": 39.99}, {"Restaurant_ID": "466a7aa2-3e95-463e-a546-a64a495bd152", "Predicted_Default_Probability": 0.3981, "Predicted_Default_Score_0_100": 39.81}, {"Restaurant_ID": "87c1005f-49f0-42a0-9841-92d1a1e73c68", "Predicted_Default_Probability": 0.397, "Predicted_Default_Score_0_100": 39.7}, {"Restaurant_ID": "583240f3-edba-44bb-8455-69d434d5773d", "Predicted_Default_Probability": 0.3954, "Predicted_Default_Score_0_100": 39.54}, {"Restaurant_ID": "4b86eaa5-0e38-49de-a0af-c34003921ee3", "Predicted_Default_Probability": 0.393, "Predicted_Default_Score_0_100": 39.3}, {"Restaurant_ID": "4d7aeaf3-a9cf-4e6a-9337-54233912369f", "Predicted_Default_Probability": 0.3926, "Predicted_Default_Score_0_100": 39.26}, {"Restaurant_ID": "cb892261-4b06-4c2c-8e9e-341f60045160", "Predicted_Default_Probability": 0.3893, "Predicted_Default_Score_0_100": 38.93}, {"Restaurant_ID": "305a2613-ba25-4f27-9b79-5bb23ecd2198", "Predicted_Default_Probability": 0.3866, "Predicted_Default_Score_0_100": 38.66}, {"Restaurant_ID": "851df45d-4ef0-482d-b13f-84ce70cd8ab9", "Predicted_Default_Probability": 0.384, "Predicted_Default_Score_0_100": 38.4}, {"Restaurant_ID": "39399925-e515-48a7-bad6-5949bdb5606c", "Predicted_Default_Probability": 0.3831, "Predicted_Default_Score_0_100": 38.31}, {"Restaurant_ID": "0633ac15-cd62-4fa1-aa6c-193e8e1e21c9", "Predicted_Default_Probability": 0.3819, "Predicted_Default_Score_0_100": 38.19}, {"Restaurant_ID": "f2210b5e-036f-42d4-8487-fdd8c2844bab", "Predicted_Default_Probability": 0.3803, "Predicted_Default_Score_0_100": 38.03}, {"Restaurant_ID": "0164b7f1-8c29-4e9b-92ac-5d368b8d3606", "Predicted_Default_Probability": 0.3771, "Predicted_Default_Score_0_100": 37.71}, {"Restaurant_ID": "a8c71a58-5864-4207-b212-c641775a5531", "Predicted_Default_Probability": 0.3768, "Predicted_Default_Score_0_100": 37.68}, {"Restaurant_ID": "ef990b89-f79e-4939-8b27-2a8e9139d6d1", "Predicted_Default_Probability": 0.3766, "Predicted_Default_Score_0_100": 37.66}, {"Restaurant_ID": "621fae11-22aa-4d9d-92c3-fc928d46649c", "Predicted_Default_Probability": 0.3764, "Predicted_Default_Score_0_100": 37.64}, {"Restaurant_ID": "21bb6df9-2cee-4580-bed9-f36c858d03b5", "Predicted_Default_Probability": 0.3735, "Predicted_Default_Score_0_100": 37.35}, {"Restaurant_ID": "98c2dba6-caec-4b19-af40-0ecf14debcf9", "Predicted_Default_Probability": 0.3718, "Predicted_Default_Score_0_100": 37.18}, {"Restaurant_ID": "feb513b5-d198-4cde-b027-d228206555df", "Predicted_Default_Probability": 0.3694, "Predicted_Default_Score_0_100": 36.94}, {"Restaurant_ID": "af47ce99-1cd5-40dc-99c5-ed0e7370a47f", "Predicted_Default_Probability": 0.3677, "Predicted_Default_Score_0_100": 36.77}, {"Restaurant_ID": "b2e83556-956d-4506-9444-7ff4e8afddb3", "Predicted_Default_Probability": 0.3668, "Predicted_Default_Score_0_100": 36.68}, {"Restaurant_ID": "0a933f60-9b99-402b-959b-e72086374f8e", "Predicted_Default_Probability": 0.3661, "Predicted_Default_Score_0_100": 36.61}, {"Restaurant_ID": "3139c36c-36f1-4251-bc3a-2e0e5a3fedf9", "Predicted_Default_Probability": 0.3654, "Predicted_Default_Score_0_100": 36.54}, {"Restaurant_ID": "83811b4f-4c31-4526-a5e7-306fcb1115cf", "Predicted_Default_Probability": 0.3646, "Predicted_Default_Score_0_100": 36.46}, {"Restaurant_ID": "ff8ba3c9-32eb-4031-a3d7-a87d95078de7", "Predicted_Default_Probability": 0.362, "Predicted_Default_Score_0_100": 36.2}, {"Restaurant_ID": "69a4997b-d4c2-47d3-91b2-9fde19b8ad95", "Predicted_Default_Probability": 0.361, "Predicted_Default_Score_0_100": 36.1}, {"Restaurant_ID": "8c8c49be-ba06-4bab-a436-b89070c4bc00", "Predicted_Default_Probability": 0.3609, "Predicted_Default_Score_0_100": 36.09}, {"Restaurant_ID": "93d17f16-ebd2-40cc-a991-41e5ab6ecd26", "Predicted_Default_Probability": 0.3604, "Predicted_Default_Score_0_100": 36.04}, {"Restaurant_ID": "62e10137-c69f-40b0-b7dd-335c45a2bc3a", "Predicted_Default_Probability": 0.3587, "Predicted_Default_Score_0_100": 35.87}, {"Restaurant_ID": "28e9d1b0-8676-40b6-a7d1-3bccfc5c4775", "Predicted_Default_Probability": 0.3585, "Predicted_Default_Score_0_100": 35.85}, {"Restaurant_ID": "3b2d0937-bb1c-47f2-8971-efc1be5dc4aa", "Predicted_Default_Probability": 0.3584, "Predicted_Default_Score_0_100": 35.84}, {"Restaurant_ID": "1743faf6-1e36-429c-a4f9-2e2bc6749ad9", "Predicted_Default_Probability": 0.358, "Predicted_Default_Score_0_100": 35.8}, {"Restaurant_ID": "cc27f0af-9e5a-429a-afa3-e81b23b06f73", "Predicted_Default_Probability": 0.3574, "Predicted_Default_Score_0_100": 35.74}, {"Restaurant_ID": "c5f55319-4823-43c9-87fb-1f5a8eddab03", "Predicted_Default_Probability": 0.3572, "Predicted_Default_Score_0_100": 35.72}, {"Restaurant_ID": "330c6b82-2679-4c0b-b0d0-fbe0059e3531", "Predicted_Default_Probability": 0.3556, "Predicted_Default_Score_0_100": 35.56}, {"Restaurant_ID": "65d29c4c-3e78-46fa-85b9-8475989b0796", "Predicted_Default_Probability": 0.355, "Predicted_Default_Score_0_100": 35.5}, {"Restaurant_ID": "6adc512d-356c-4e0f-853c-3db7d17fd42a", "Predicted_Default_Probability": 0.3532, "Predicted_Default_Score_0_100": 35.32}, {"Restaurant_ID": "dfcf96c8-300b-445f-9e82-5361878311cb", "Predicted_Default_Probability": 0.3529, "Predicted_Default_Score_0_100": 35.29}, {"Restaurant_ID": "0f62165c-975d-47dc-b432-4748fcd7875a", "Predicted_Default_Probability": 0.3529, "Predicted_Default_Score_0_100": 35.29}, {"Restaurant_ID": "b1f9a447-6000-4c37-b6dc-68778b89db9a", "Predicted_Default_Probability": 0.3526, "Predicted_Default_Score_0_100": 35.26}, {"Restaurant_ID": "222bb351-8fd1-465d-b04a-eead9fa91914", "Predicted_Default_Probability": 0.3506, "Predicted_Default_Score_0_100": 35.06}, {"Restaurant_ID": "9aa5310b-e24e-4c12-a68b-6e96eaf7b795", "Predicted_Default_Probability": 0.35, "Predicted_Default_Score_0_100": 35.0}, {"Restaurant_ID": "8b7960b8-961b-4878-9445-88e424d4ade9", "Predicted_Default_Probability": 0.3486, "Predicted_Default_Score_0_100": 34.86}, {"Restaurant_ID": "3971d87f-6b42-49c5-b0af-7fbc0d878edf", "Predicted_Default_Probability": 0.3455, "Predicted_Default_Score_0_100": 34.55}, {"Restaurant_ID": "38400e49-3135-4f04-ac6f-41e02d42d05d", "Predicted_Default_Probability": 0.3452, "Predicted_Default_Score_0_100": 34.52}, {"Restaurant_ID": "182bbc54-8429-4135-ba8d-ec88624cb9d9", "Predicted_Default_Probability": 0.345, "Predicted_Default_Score_0_100": 34.5}, {"Restaurant_ID": "fce69f3b-cb8b-4172-9ecc-3a805bce4b47", "Predicted_Default_Probability": 0.3419, "Predicted_Default_Score_0_100": 34.19}, {"Restaurant_ID": "a6b08722-5c73-43e3-a760-8a9dcb1781a5", "Predicted_Default_Probability": 0.3401, "Predicted_Default_Score_0_100": 34.01}, {"Restaurant_ID": "1902313c-78b7-4d45-8c7d-2e3c313664bf", "Predicted_Default_Probability": 0.3399, "Predicted_Default_Score_0_100": 33.99}, {"Restaurant_ID": "7c03b5bd-536c-4526-9b33-456eed5ef2a2", "Predicted_Default_Probability": 0.3367, "Predicted_Default_Score_0_100": 33.67}, {"Restaurant_ID": "90c3535d-99e8-4e79-91fc-fbc5faa7f351", "Predicted_Default_Probability": 0.3351, "Predicted_Default_Score_0_100": 33.51}, {"Restaurant_ID": "29ffa3d7-da0f-40ce-b71d-5d2cc30a529f", "Predicted_Default_Probability": 0.3351, "Predicted_Default_Score_0_100": 33.51}, {"Restaurant_ID": "d34e0a6b-107b-48cd-bd15-320114e63777", "Predicted_Default_Probability": 0.3348, "Predicted_Default_Score_0_100": 33.48}, {"Restaurant_ID": "0f1f3049-c096-4228-9ff1-183e75970d75", "Predicted_Default_Probability": 0.3337, "Predicted_Default_Score_0_100": 33.37}, {"Restaurant_ID": "4d3d4c05-7e9c-46d1-a167-3896d058328c", "Predicted_Default_Probability": 0.3336, "Predicted_Default_Score_0_100": 33.36}, {"Restaurant_ID": "999551fb-668c-4062-80df-e7094cefec0b", "Predicted_Default_Probability": 0.3333, "Predicted_Default_Score_0_100": 33.33}, {"Restaurant_ID": "7bffef05-577b-4cd1-80bf-d2e3ad178350", "Predicted_Default_Probability": 0.3321, "Predicted_Default_Score_0_100": 33.21}, {"Restaurant_ID": "82cce12b-d674-4116-a546-80d3a0b9ed44", "Predicted_Default_Probability": 0.332, "Predicted_Default_Score_0_100": 33.2}, {"Restaurant_ID": "be63d614-8cf6-43e9-8a9c-cd03b31ca929", "Predicted_Default_Probability": 0.3317, "Predicted_Default_Score_0_100": 33.17}, {"Restaurant_ID": "1295e269-c2a3-4894-a2b5-c7997ad8bc31", "Predicted_Default_Probability": 0.3307, "Predicted_Default_Score_0_100": 33.07}, {"Restaurant_ID": "3f62e42c-9c0f-4bfc-abd4-d749eb58a2ac", "Predicted_Default_Probability": 0.33, "Predicted_Default_Score_0_100": 33.0}, {"Restaurant_ID": "bf4f5555-1cb8-4687-b399-eec33c531444", "Predicted_Default_Probability": 0.3299, "Predicted_Default_Score_0_100": 32.99}, {"Restaurant_ID": "82d35d5a-d63f-45d1-a83d-9f534be1b3f4", "Predicted_Default_Probability": 0.3285, "Predicted_Default_Score_0_100": 32.85}, {"Restaurant_ID": "588d0fed-8193-4acd-aa5d-208cdb9338b1", "Predicted_Default_Probability": 0.3285, "Predicted_Default_Score_0_100": 32.85}, {"Restaurant_ID": "34a5715d-768f-4f7d-8651-28ab57765c3e", "Predicted_Default_Probability": 0.3276, "Predicted_Default_Score_0_100": 32.76}, {"Restaurant_ID": "7267f957-3520-47b7-875a-18aeb56571d1", "Predicted_Default_Probability": 0.3243, "Predicted_Default_Score_0_100": 32.43}, {"Restaurant_ID": "0d3bf3ba-9321-47e6-9529-646549d78825", "Predicted_Default_Probability": 0.324, "Predicted_Default_Score_0_100": 32.4}, {"Restaurant_ID": "1829435c-86eb-4086-a04d-bdae252b72e9", "Predicted_Default_Probability": 0.3238, "Predicted_Default_Score_0_100": 32.38}, {"Restaurant_ID": "34e528ae-599c-437c-bb98-80714b460a5b", "Predicted_Default_Probability": 0.3234, "Predicted_Default_Score_0_100": 32.34}, {"Restaurant_ID": "e42ea752-51cf-4829-9ced-8fd385aea953", "Predicted_Default_Probability": 0.3214, "Predicted_Default_Score_0_100": 32.14}, {"Restaurant_ID": "5d03c420-ee9c-47d9-89c1-cf6dea0ee62a", "Predicted_Default_Probability": 0.3205, "Predicted_Default_Score_0_100": 32.05}, {"Restaurant_ID": "7b9286ae-0b9e-4c16-ba45-ce94ddf7ec54", "Predicted_Default_Probability": 0.3181, "Predicted_Default_Score_0_100": 31.81}, {"Restaurant_ID": "9a88c834-d08e-4681-9f17-870de7a0850e", "Predicted_Default_Probability": 0.3174, "Predicted_Default_Score_0_100": 31.74}, {"Restaurant_ID": "0b0ab294-ecb4-492a-b7fb-b3ff9203bc26", "Predicted_Default_Probability": 0.3168, "Predicted_Default_Score_0_100": 31.68}, {"Restaurant_ID": "e8d72004-a894-4a8a-bb15-68d7f2f8598e", "Predicted_Default_Probability": 0.3162, "Predicted_Default_Score_0_100": 31.62}, {"Restaurant_ID": "781aa6dc-cfc4-4ba2-97e7-95072314020e", "Predicted_Default_Probability": 0.3157, "Predicted_Default_Score_0_100": 31.57}, {"Restaurant_ID": "eab23da2-f85e-47ee-9baa-f4d60558e753", "Predicted_Default_Probability": 0.3135, "Predicted_Default_Score_0_100": 31.35}, {"Restaurant_ID": "a1266707-0b61-4c7f-a6ba-f444e2c17192", "Predicted_Default_Probability": 0.3132, "Predicted_Default_Score_0_100": 31.32}, {"Restaurant_ID": "679b4701-f22c-4805-8299-f89a8d66593b", "Predicted_Default_Probability": 0.3128, "Predicted_Default_Score_0_100": 31.28}, {"Restaurant_ID": "045187f7-8970-4871-be70-4059bd650b64", "Predicted_Default_Probability": 0.3126, "Predicted_Default_Score_0_100": 31.26}, {"Restaurant_ID": "b66263f8-3177-4e40-b77c-8bcb08ffc83c", "Predicted_Default_Probability": 0.312, "Predicted_Default_Score_0_100": 31.2}, {"Restaurant_ID": "0bf11568-a38a-4772-89e7-15b2c6a56ce8", "Predicted_Default_Probability": 0.3119, "Predicted_Default_Score_0_100": 31.19}, {"Restaurant_ID": "bbd6435d-6c15-4c1b-b687-f186967812b1", "Predicted_Default_Probability": 0.3114, "Predicted_Default_Score_0_100": 31.14}, {"Restaurant_ID": "50b55bab-575a-43f1-adcf-7c8a9b95f7b2", "Predicted_Default_Probability": 0.3114, "Predicted_Default_Score_0_100": 31.14}, {"Restaurant_ID": "01da3edd-c82e-4d7d-96da-d05c6f570f32", "Predicted_Default_Probability": 0.3112, "Predicted_Default_Score_0_100": 31.12}, {"Restaurant_ID": "04136781-6a8f-481f-ba3e-ef9ed6066a5a", "Predicted_Default_Probability": 0.3097, "Predicted_Default_Score_0_100": 30.97}, {"Restaurant_ID": "442b026a-633f-4b29-989c-ac28a70d2a23", "Predicted_Default_Probability": 0.3092, "Predicted_Default_Score_0_100": 30.92}, {"Restaurant_ID": "c06408b1-40ff-4b7f-8575-7b0120eee0ee", "Predicted_Default_Probability": 0.3091, "Predicted_Default_Score_0_100": 30.91}, {"Restaurant_ID": "025d16fd-586e-429a-a823-04c127b93367", "Predicted_Default_Probability": 0.3065, "Predicted_Default_Score_0_100": 30.65}, {"Restaurant_ID": "4792eabf-867e-483a-a3de-bfcdd3eb18f8", "Predicted_Default_Probability": 0.3056, "Predicted_Default_Score_0_100": 30.56}, {"Restaurant_ID": "18c2412f-5512-488f-ae61-2268c3cd8675", "Predicted_Default_Probability": 0.3048, "Predicted_Default_Score_0_100": 30.48}, {"Restaurant_ID": "87a30f91-d09a-4283-854c-9594efb315d8", "Predicted_Default_Probability": 0.3045, "Predicted_Default_Score_0_100": 30.45}, {"Restaurant_ID": "5109b442-03b2-4d3e-a72e-5db48cc81858", "Predicted_Default_Probability": 0.3045, "Predicted_Default_Score_0_100": 30.45}, {"Restaurant_ID": "e4a37355-e5fd-4398-92ec-59e6140ef766", "Predicted_Default_Probability": 0.304, "Predicted_Default_Score_0_100": 30.4}, {"Restaurant_ID": "bc9a229a-9383-4f2e-9eb6-029ce7234d61", "Predicted_Default_Probability": 0.3039, "Predicted_Default_Score_0_100": 30.39}, {"Restaurant_ID": "ce6db728-2328-4c06-bbbc-20b714e90399", "Predicted_Default_Probability": 0.3035, "Predicted_Default_Score_0_100": 30.35}, {"Restaurant_ID": "b30c5ce0-1da7-4e95-b82e-66de39728f42", "Predicted_Default_Probability": 0.3032, "Predicted_Default_Score_0_100": 30.32}, {"Restaurant_ID": "ab175d47-2941-4a0a-a872-c58aaec719dc", "Predicted_Default_Probability": 0.3023, "Predicted_Default_Score_0_100": 30.23}, {"Restaurant_ID": "92a5de30-e340-4ee6-97c6-52794f1c68fb", "Predicted_Default_Probability": 0.3017, "Predicted_Default_Score_0_100": 30.17}, {"Restaurant_ID": "9e912079-c927-4c87-bd34-425b152e8482", "Predicted_Default_Probability": 0.3015, "Predicted_Default_Score_0_100": 30.15}, {"Restaurant_ID": "ebe58e51-c96f-4aed-b090-1fac1f48d246", "Predicted_Default_Probability": 0.3006, "Predicted_Default_Score_0_100": 30.06}, {"Restaurant_ID": "c29eeac6-0591-4076-97a8-170ce74d8534", "Predicted_Default_Probability": 0.3003, "Predicted_Default_Score_0_100": 30.03}, {"Restaurant_ID": "022feab6-6ea6-48c6-af18-b143c05bddb4", "Predicted_Default_Probability": 0.2995, "Predicted_Default_Score_0_100": 29.95}, {"Restaurant_ID": "646dcc0c-474c-40e6-9c72-ebe5fd1419ac", "Predicted_Default_Probability": 0.2983, "Predicted_Default_Score_0_100": 29.83}, {"Restaurant_ID": "6e341a8b-6fb0-46c4-a84c-f86b8c647b21", "Predicted_Default_Probability": 0.2971, "Predicted_Default_Score_0_100": 29.71}, {"Restaurant_ID": "7adf6f0e-e3e3-4f14-83f3-83b65533ce16", "Predicted_Default_Probability": 0.2968, "Predicted_Default_Score_0_100": 29.68}, {"Restaurant_ID": "05913d81-1c46-4480-9071-a16550315c50", "Predicted_Default_Probability": 0.2967, "Predicted_Default_Score_0_100": 29.67}, {"Restaurant_ID": "5d2c8da8-2ce3-4e0a-9694-80a6f980065f", "Predicted_Default_Probability": 0.2954, "Predicted_Default_Score_0_100": 29.54}, {"Restaurant_ID": "58255915-9a4d-4b12-8698-d4a40559b4a7", "Predicted_Default_Probability": 0.2949, "Predicted_Default_Score_0_100": 29.49}, {"Restaurant_ID": "7f0f3d3d-f964-4c68-bb17-5f91fa2dbd36", "Predicted_Default_Probability": 0.2943, "Predicted_Default_Score_0_100": 29.43}, {"Restaurant_ID": "0f0ec840-81ff-48bb-a311-5f8c1a9cc915", "Predicted_Default_Probability": 0.2926, "Predicted_Default_Score_0_100": 29.26}, {"Restaurant_ID": "2b66b553-efb0-46ba-97e0-edef0b2004a3", "Predicted_Default_Probability": 0.2914, "Predicted_Default_Score_0_100": 29.14}], "model_card": {"model_type": "LogisticRegression", "random_state": 42, "best_hyperparameters": {"C": 0.01, "class_weight": null, "dual": false, "fit_intercept": true, "intercept_scaling": 1, "l1_ratio": null, "max_iter": 3000, "multi_class": "deprecated", "n_jobs": null, "penalty": "l2", "random_state": 42, "solver": "liblinear", "tol": 0.0001, "verbose": 0, "warm_start": false}, "train_rows": 10812, "holdout_rows": 4514, "target_event_rate": 0.0948020718, "test_auc": 0.781515791, "test_accuracy": 0.9104698483, "test_balanced_accuracy": 0.5920490971, "test_precision": 0.5795454545, "test_recall": 0.19921875, "auc_gap": 0.0232600423, "calibration_mae": 0.0231440879, "calibration_max_deviation": 0.0231440879, "features_used_count": 8}, "holdout_total_restaurants": 4514}</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data-blob').textContent);
+const PALETTE_PRIMARY = '#38bdf8';
+const PALETTE_SECONDARY = '#f97316';
+const PALETTE_BG = 'rgba(15,23,42,0)';
+const COMMON_LAYOUT = {
+  paper_bgcolor: PALETTE_BG,
+  plot_bgcolor: PALETTE_BG,
+  font: { color: '#e2e8f0' },
+  margin: { t: 50, r: 30, l: 60, b: 80 },
+  xaxis: { gridcolor: '#334155' },
+  yaxis: { gridcolor: '#334155' },
+  legend: { orientation: 'h', y: -0.2 },
+};
+
+function summaryCards() {
+  const mc = DATA.model_card;
+  const cards = [
+    { label: 'Test AUC', value: mc.test_auc.toFixed(3) },
+    { label: 'Train AUC', value: DATA.model_performance[0].train_auc.toFixed(3) },
+    { label: 'KS', value: DATA.model_performance[0].test_ks.toFixed(3) },
+    { label: 'Accuracy', value: mc.test_accuracy.toFixed(3) },
+    { label: 'Precision', value: mc.test_precision.toFixed(3) },
+    { label: 'Recall', value: mc.test_recall.toFixed(3) },
+    { label: 'Train Rows', value: mc.train_rows.toLocaleString() },
+    { label: 'Holdout Rows', value: DATA.holdout_total_restaurants.toLocaleString() },
+  ];
+  const root = document.getElementById('summary-cards');
+  root.innerHTML = cards.map(c => `
+    <div class="col-6 col-md-3">
+      <div class="card p-3 h-100">
+        <div class="metric-label">${c.label}</div>
+        <div class="metric-value">${c.value}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function modelCompareChart() {
+  const rows = DATA.model_performance;
+  const metrics = ['train_auc','test_auc','test_accuracy','test_balanced_accuracy','test_precision','test_recall','test_ks'];
+  const labels = ['Train AUC','Test AUC','Accuracy','Balanced Acc.','Precision','Recall','KS'];
+  const traces = rows.map((row, idx) => ({
+    type: 'bar',
+    name: row.model,
+    x: labels,
+    y: metrics.map(m => row[m]),
+    marker: { color: idx===0 ? PALETTE_PRIMARY : PALETTE_SECONDARY },
+    text: metrics.map(m => row[m].toFixed(3)),
+    textposition: 'outside',
+  }));
+  Plotly.newPlot('chart-model-compare', traces, { ...COMMON_LAYOUT, barmode: 'group',
+    title: 'Logistic Regression vs Gradient Boosting',
+    yaxis: { ...COMMON_LAYOUT.yaxis, range: [0,1] }
+  }, {responsive:true});
+}
+
+function featureImportanceChart() {
+  const rows = DATA.feature_importance.sort((a,b)=>a.importance-b.importance);
+  Plotly.newPlot('chart-feature-importance', [{
+    type:'bar', orientation:'h',
+    x: rows.map(r=>r.importance),
+    y: rows.map(r=>r.feature),
+    marker:{ color: PALETTE_PRIMARY },
+    text: rows.map(r=>r.importance.toFixed(3)), textposition:'outside'
+  }], { ...COMMON_LAYOUT, title: 'Top features driving predicted PD' }, {responsive:true});
+}
+
+function decilesChart() {
+  const rows = DATA.deciles;
+  Plotly.newPlot('chart-deciles', [
+    { type:'bar', name:'Sample Size', x: rows.map(r=>'Decile '+r.decile), y: rows.map(r=>r.sample_size), marker:{ color:'#475569' }, yaxis:'y2', opacity:0.7 },
+    { type:'scatter', mode:'lines+markers', name:'Avg Predicted PD', x: rows.map(r=>'Decile '+r.decile), y: rows.map(r=>r.avg_pred), line:{ color:PALETTE_PRIMARY, width:3 }, marker:{ size:8 } }
+  ], {
+    ...COMMON_LAYOUT,
+    title:'Average Predicted PD across deciles',
+    yaxis: { ...COMMON_LAYOUT.yaxis, title:'Avg Predicted PD' },
+    yaxis2: { overlaying:'y', side:'right', title:'Sample Size', gridcolor:'transparent' },
+  }, {responsive:true});
+}
+
+function histChart() {
+  const h = DATA.histogram;
+  const x = h.bin_left.map((bl,i)=>(bl+h.bin_right[i])/2);
+  Plotly.newPlot('chart-hist', [{
+    type:'bar', x, y:h.count, marker:{ color: PALETTE_PRIMARY },
+    hovertemplate: 'PD ~ %{x:.3f}<br>count = %{y}<extra></extra>'
+  }], {
+    ...COMMON_LAYOUT,
+    title: 'Holdout predicted PD distribution',
+    xaxis: { ...COMMON_LAYOUT.xaxis, title:'Predicted Default Probability' },
+    yaxis: { ...COMMON_LAYOUT.yaxis, title:'Count' },
+  }, {responsive:true});
+}
+
+function vifChart() {
+  const rows = DATA.vif.slice().sort((a,b)=>a.VIF-b.VIF);
+  Plotly.newPlot('chart-vif', [{
+    type:'bar', orientation:'h',
+    x: rows.map(r=>r.VIF), y: rows.map(r=>r.feature),
+    marker:{ color: rows.map(r=>r.VIF>10?'#ef4444': r.VIF>5?'#f59e0b':'#22c55e') },
+    text: rows.map(r=>r.VIF.toFixed(2)), textposition:'outside'
+  }], {
+    ...COMMON_LAYOUT,
+    title: 'VIF (>10 indicates strong multicollinearity)',
+    xaxis: { ...COMMON_LAYOUT.xaxis, title:'VIF' },
+  }, {responsive:true});
+}
+
+function riskTable() {
+  const tbody = document.querySelector('#riskTable tbody');
+  function render(filter='') {
+    const f = filter.trim().toLowerCase();
+    const rows = DATA.top_risk_restaurants.filter(r => !f || r.Restaurant_ID.toLowerCase().includes(f));
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td><code>${r.Restaurant_ID}</code></td>
+        <td class="text-end">${(+r.Predicted_Default_Probability).toFixed(4)}</td>
+        <td class="text-end">${(+r.Predicted_Default_Score_0_100).toFixed(2)}</td>
+      </tr>
+    `).join('');
+  }
+  render();
+  document.getElementById('riskSearch').addEventListener('input', e => render(e.target.value));
+}
+
+function calibrationTable() {
+  const rows = DATA.calibration;
+  const cols = Object.keys(rows[0]);
+  const head = cols.map(c=>`<th>${c}</th>`).join('');
+  const body = rows.map(r=>`<tr>${cols.map(c=>`<td>${typeof r[c] === 'number' ? (+r[c]).toFixed(4) : r[c]}</td>`).join('')}</tr>`).join('');
+  document.getElementById('calibration-table').innerHTML = `
+    <div class="table-responsive">
+      <table class="table table-sm table-striped">
+        <thead><tr>${head}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>`;
+}
+
+function modelCardPre() {
+  document.getElementById('model-card-pre').textContent = JSON.stringify(DATA.model_card, null, 2);
+}
+
+summaryCards();
+modelCompareChart();
+featureImportanceChart();
+decilesChart();
+histChart();
+vifChart();
+riskTable();
+calibrationTable();
+modelCardPre();
+</script>
+</body>
+</html>

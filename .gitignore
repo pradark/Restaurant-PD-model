@@ -16,3 +16,6 @@ __pycache__/
 # Keep source notebooks and scripts versioned, but avoid executed export clutter
 *.html
 *.pdf
+
+# Allow the published interactive report
+!index.html
