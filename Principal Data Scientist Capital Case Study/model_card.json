@@ -1,0 +1,35 @@
+[
+  {
+    "model_type":"LogisticRegression",
+    "random_state":42,
+    "best_hyperparameters":{
+      "C":0.01,
+      "class_weight":null,
+      "dual":false,
+      "fit_intercept":true,
+      "intercept_scaling":1,
+      "l1_ratio":null,
+      "max_iter":3000,
+      "multi_class":"deprecated",
+      "n_jobs":null,
+      "penalty":"l2",
+      "random_state":42,
+      "solver":"liblinear",
+      "tol":0.0001,
+      "verbose":0,
+      "warm_start":false
+    },
+    "train_rows":10812,
+    "holdout_rows":4514,
+    "target_event_rate":0.0948020718,
+    "test_auc":0.781515791,
+    "test_accuracy":0.9104698483,
+    "test_balanced_accuracy":0.5920490971,
+    "test_precision":0.5795454545,
+    "test_recall":0.19921875,
+    "auc_gap":0.0232600423,
+    "calibration_mae":0.0231440879,
+    "calibration_max_deviation":0.0231440879,
+    "features_used_count":8
+  }
+]
