@@ -1,0 +1,17 @@
+{
+  "rfecv_features": [
+    "avg_proc_vol",
+    "std_proc_vol",
+    "avg_tx_hours",
+    "cv_proc_vol",
+    "cv_tx_hours"
+  ],
+  "n_features_selected": 5,
+  "total_features": 12,
+  "feature_reduction_pct": 58.33333333333333,
+  "optimal_cv_auc": 0.7603719298476082,
+  "test_auc_all": 0.7854530506489947,
+  "test_auc_rfecv": 0.7831759635267446,
+  "overfitting_gap_all": -1.814117168903619,
+  "overfitting_gap_rfecv": -2.122788775057337
+}
