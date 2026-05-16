@@ -1,0 +1,18 @@
+OPTUNA OPTIMIZED HYPERPARAMETERS
+============================================================
+
+Best CV AUC: 0.7572
+
+Best Hyperparameters:
+  inner_bags: 3
+  interactions: 13
+  learning_rate: 0.007329
+  max_leaves: 2
+  max_rounds: 1728
+  min_samples_leaf: 15
+  outer_bags: 13
+
+Final Model Performance:
+  Train AUC: 0.7852
+  Test AUC: 0.7558
+  Overfitting Gap: 0.0294
